@@ -37,7 +37,7 @@ workflows:
 
       - name: Build ipa for distribution
         script: |
-          WORKSPACE=$(find . -name "*.xcworkspace" -not -path "*/Pods/*" | head -1)
+          WORKSPACE=$(find . -name "*.xcworkspace" -not -path "*/Pods/*" -not -path "*.xcodeproj/*" | head -1)
           SCHEME=$(find . -name "*.xcscheme" -not -path "*/Pods/*" | head -1 | xargs -I{} basename {} .xcscheme)
           echo "Building workspace: $WORKSPACE"
           echo "Building scheme: $SCHEME"
