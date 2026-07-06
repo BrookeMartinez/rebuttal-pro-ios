@@ -1,0 +1,27 @@
+workflows:
+  ios-app-store:
+    name: iOS App Store Release
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: codemagic
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.crestimpact.rebuttalpro
+    scripts:
+      - name: Set up code signing settings on Xcode project
+        script: |
+          xcode-project use-profiles
+      - name: Build ipa for distribution
+        script: |
+          xcode-project build-ipa \
+            --workspace "$(find . -name "*.xcworkspace" | head -1)" \
+            --scheme "$(find . -name "*.xcscheme" | head -1 | xargs basename | sed 's/.xcscheme//')"
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: false
+        submit_to_app_store: true
