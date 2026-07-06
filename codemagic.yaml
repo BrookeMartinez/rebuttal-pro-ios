@@ -6,30 +6,53 @@ workflows:
     integrations:
       app_store_connect: codemagic
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.crestimpact.rebuttalpro
-        certificate_private_key: Encrypted()
+      vars:
+        BUNDLE_ID: "com.crestimpact.rebuttalpro"
+      xcode: latest
+      cocoapods: default
     scripts:
-      - name: Fetch signing files
+      - name: Install CocoaPods dependencies (if the project uses any)
         script: |
-          app-store-connect fetch-signing-files \
-            com.crestimpact.rebuttalpro \
+          find . -name "Podfile" -execdir pod install \;
+
+      - name: Set up keychain to use for code signing
+        script: |
+          keychain initialize
+
+      - name: Fetch signing files (creates certificate + provisioning profile automatically)
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --create
+
       - name: Add certificates to keychain
-        script: keychain add-certificates
-      - name: Set up code signing settings on Xcode project
-        script: xcode-project use-profiles
-      - name: Build IPA
         script: |
-          xcode-project build-ipa \
-            --workspace "$(find . -name "*.xcworkspace" | head -1)" \
-            --scheme "$(find . -name "*.xcscheme" | head -1 | xargs basename | sed 's/.xcscheme//')"
+          keychain add-certificates
+
+      - name: Set up code signing settings on Xcode project
+        script: |
+          xcode-project use-profiles
+
+      - name: Build ipa for distribution
+        script: |
+          WORKSPACE=$(find . -name "*.xcworkspace" -not -path "*/Pods/*" | head -1)
+          SCHEME=$(find . -name "*.xcscheme" -not -path "*/Pods/*" | head -1 | xargs -I{} basename {} .xcscheme)
+          echo "Building workspace: $WORKSPACE"
+          echo "Building scheme: $SCHEME"
+          xcode-project build-ipa --workspace "$WORKSPACE" --scheme "$SCHEME"
+
     artifacts:
       - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
     publishing:
       app_store_connect:
         auth: integration
         submit_to_testflight: false
-        submit_to_app_store: true
+        submit_to_app_store: false
+      email:
+        recipients:
+          - brooke@helpyouproperty.com
+        notify:
+          success: true
+          failure: true
