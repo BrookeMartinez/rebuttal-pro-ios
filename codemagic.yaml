@@ -6,6 +6,8 @@ workflows:
     integrations:
       app_store_connect: codemagic
     environment:
+      groups:
+        - certificate_credentials
       vars:
         BUNDLE_ID: "com.crestimpact.rebuttalpro"
       xcode: latest
