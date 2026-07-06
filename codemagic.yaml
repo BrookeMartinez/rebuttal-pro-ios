@@ -10,10 +10,9 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.crestimpact.rebuttalpro
     scripts:
-      - name: Set up code signing settings on Xcode project
-        script: |
-          xcode-project use-profiles
-      - name: Build ipa for distribution
+      - name: Set up code signing
+        script: xcode-project use-profiles
+      - name: Build IPA
         script: |
           xcode-project build-ipa \
             --workspace "$(find . -name "*.xcworkspace" | head -1)" \
