@@ -9,8 +9,17 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.crestimpact.rebuttalpro
+        certificate_private_key: Encrypted()
     scripts:
-      - name: Set up code signing
+      - name: Fetch signing files
+        script: |
+          app-store-connect fetch-signing-files \
+            com.crestimpact.rebuttalpro \
+            --type IOS_APP_STORE \
+            --create
+      - name: Add certificates to keychain
+        script: keychain add-certificates
+      - name: Set up code signing settings on Xcode project
         script: xcode-project use-profiles
       - name: Build IPA
         script: |
